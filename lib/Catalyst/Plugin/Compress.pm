@@ -2,9 +2,9 @@ package Catalyst::Plugin::Compress;
 
 use strict;
 use Catalyst::Utils;
-use NEXT;
+use MRO::Compat;
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 my $_method;
 my %_compression_lib = (
@@ -60,7 +60,10 @@ sub setup {
 
         *_do_compress = \&{"_${_method}_compress"};
     }
-    $c->NEXT::setup(@_);
+    $_method
+        ? $c->log->debug(qq{Catalyst::Plugin::Compress sets compression_format to '$_method'})
+        : $c->log->debug(qq{Catalyst::Plugin::Compress has no compression_format config - disabled.});
+    $c->maybe::next::method(@_);
 }
 
 sub finalize {
@@ -72,13 +75,13 @@ sub finalize {
         or ($c->res->status != 200)
         or ($c->res->content_type !~ /^text|xml$|javascript$/)
     ) {
-        return $c->NEXT::finalize;
+        return $c->maybe::next::method(@_);
     }
 
     my $accept = $c->request->header('Accept-Encoding') || '';
 
     unless (index($accept, $_method) >= 0) {
-        return $c->NEXT::finalize;
+        return $c->maybe::next::method(@_);
     }
 
     my $body = $c->res->body;
@@ -94,7 +97,7 @@ sub finalize {
     $c->response->content_encoding($_method);
     $c->response->headers->push_header('Vary', 'Accept-Encoding');
 
-    $c->NEXT::finalize;
+    $c->maybe::next::method(@_);
 }
 
 1;
