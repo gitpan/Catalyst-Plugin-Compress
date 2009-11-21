@@ -4,7 +4,7 @@ use strict;
 use Catalyst::Utils;
 use MRO::Compat;
 
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 my $_method;
 my %_compression_lib = (
@@ -60,9 +60,11 @@ sub setup {
 
         *_do_compress = \&{"_${_method}_compress"};
     }
-    $_method
-        ? $c->log->debug(qq{Catalyst::Plugin::Compress sets compression_format to '$_method'})
-        : $c->log->debug(qq{Catalyst::Plugin::Compress has no compression_format config - disabled.});
+    if ($c->debug) {
+        $_method
+            ? $c->log->debug(qq{Catalyst::Plugin::Compress sets compression_format to '$_method'})
+            : $c->log->debug(qq{Catalyst::Plugin::Compress has no compression_format config - disabled.});
+    }
     $c->maybe::next::method(@_);
 }
 
