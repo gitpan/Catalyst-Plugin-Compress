@@ -4,7 +4,7 @@ use strict;
 use Catalyst::Utils;
 use MRO::Compat;
 
-our $VERSION = '0.003';
+our $VERSION = '0.004';
 
 my $_method;
 my %_compression_lib = (
@@ -75,7 +75,7 @@ sub finalize {
         or $c->res->content_encoding
         or (not $c->res->body)
         or ($c->res->status != 200)
-        or ($c->res->content_type !~ /^text|xml$|javascript$/)
+        or ($c->res->content_type !~ /^text|xml$|javascript|json$/)
     ) {
         return $c->maybe::next::method(@_);
     }
