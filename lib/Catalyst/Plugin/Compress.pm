@@ -4,7 +4,7 @@ use strict;
 use Catalyst::Utils;
 use MRO::Compat;
 
-our $VERSION = '0.004';
+our $VERSION = '0.005';
 
 my $_method;
 my %_compression_lib = (
@@ -68,6 +68,22 @@ sub setup {
     $c->maybe::next::method(@_);
 }
 
+use List::Util qw(first);
+sub should_compress_response {
+    my ($self) = @_;
+    my ($ct) = split /;/, $self->res->content_type;
+    my @compress_types = qw(
+        application/javascript
+        application/json
+        application/x-javascript
+        application/xml
+    );
+    return 1
+        if ($ct =~ m{^text/})
+            or ($ct =~ m{\+xml$}
+            or (first { lc($ct) eq $_ } @compress_types));
+}
+
 sub finalize {
     my $c = shift;
 
@@ -75,7 +91,7 @@ sub finalize {
         or $c->res->content_encoding
         or (not $c->res->body)
         or ($c->res->status != 200)
-        or ($c->res->content_type !~ /^text|xml$|javascript|json$/)
+        or (not $c->should_compress_response)
     ) {
         return $c->maybe::next::method(@_);
     }
@@ -151,6 +167,12 @@ If you don't, You'll get error which is like:
 
 [error] Caught exception in engine "Wide character in subroutine entry at
 /usr/lib/perl5/site_perl/5.8.8/Compress/Zlib.pm line xxx."
+
+=head1 INTERNAL METHODS
+
+=head2 should_compress_response
+
+This method determine wether compressing the reponse using this plugin.
 
 =head1 SEE ALSO
 
