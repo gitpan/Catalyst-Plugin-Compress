@@ -1,3 +1,4 @@
+Changes
 inc/Module/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm
@@ -16,3 +17,4 @@ META.yml
 t/01use.t
 t/02pod.t
 t/03podcoverage.t
+t/utf8.t

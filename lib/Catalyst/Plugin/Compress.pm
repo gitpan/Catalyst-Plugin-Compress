@@ -4,7 +4,7 @@ use strict;
 use Catalyst::Utils;
 use MRO::Compat;
 
-our $VERSION = '0.005';
+our $VERSION = '0.006';
 
 my $_method;
 my %_compression_lib = (
@@ -102,6 +102,11 @@ sub finalize {
         return $c->maybe::next::method(@_);
     }
 
+    # Hack to support newer Catalyst.  We need to invokce the encoding stuff
+    # Now since after the content encoding header is set, we can no longer
+    # call that method. (jnap, to support 590080+)
+    $c->finalize_encoding if($c->can('encoding') and $c->can('clear_encoding'));
+
     my $body = $c->res->body;
     if (ref $body) {
         eval { local $/; $body = <$body> };
@@ -130,14 +135,20 @@ Catalyst::Plugin::Compress - Compress response
 
     use Catalyst qw/Compress/;
 
-or
+or (Catalyst pre Unicode Merge, and If you want to use this plugin with
+L<Catalyst::Plugin::Unicode>.)
 
     use Catalyst qw/
         Unicode
         Compress
     /;
 
-If you want to use this plugin with L<Catalyst::Plugin::Unicode>.
+or (Catalyst 5.90080 and later)
+
+    use Catalyst qw/
+        Compress
+    /;
+
 
 Remember to specify compression_format with:
 
@@ -153,9 +164,12 @@ by lynx and some other console text-browsers.
 This module combines L<Catalyst::Plugin::Deflate> L<Catalyst::Plugin::Gzip>
 L<Catalyst::Plugin::Zlib> into one.
 
-It compress response to [gzip bzip2 zlib deflate] if client supports it.
+It compress response to [gzip bzip2 zlib deflate] if client supports it.  In other
+works the client should send the Accept-Encoding HTTP header with a supported
+compression like 'gzip'.
 
-B<NOTE>: If you want to use this module with L<Catalyst::Plugin::Unicode>, You
+B<NOTE>: If you are using an older version of L<Catalyst> that requires the Unicode
+plugin and if you want to use this module with L<Catalyst::Plugin::Unicode>, You
 B<MUST> load this plugin B<AFTER> L<Catalyst::Plugin::Unicode>.
 
     use Catalyst qw/
@@ -167,6 +181,9 @@ If you don't, You'll get error which is like:
 
 [error] Caught exception in engine "Wide character in subroutine entry at
 /usr/lib/perl5/site_perl/5.8.8/Compress/Zlib.pm line xxx."
+
+If you upgrade to any version of L<Catalyst> 5.90080+ the unicode support has been
+integrated into core code and this plugin is designed to work with that.
 
 =head1 INTERNAL METHODS
 
